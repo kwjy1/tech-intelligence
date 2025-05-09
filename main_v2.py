@@ -131,9 +131,9 @@ if "articles" in st.session_state:
         md += "|---|---|---|\n"
         
         for article in st.session_state.naver_news:
-            title = article['title'].replace('|', '\\|').replace('|', '\\|').replace("<b>","").replace("</b>","")
+            title = article['title'].replace('|', '\\|').replace("<b>","").replace("</b>","")
             url = article["link"]
-            desc = article["description"].replace("<b>","").replace("</b>","")
+            desc = article["description"].replace('|', '\\|').replace("<b>","").replace("</b>","")
             date = article["pubDate"][:16]
 
             title_md = f"[{title}]({url})"
