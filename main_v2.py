@@ -15,10 +15,16 @@ st.markdown("""
 - 링크(URL) 기준으로 중복기사를 제거하기 때문에 언론사별 동일한 기사가 존재할 수 있습니다
 """)
 
-api_key_openai = st.text_input("OpenAI API Key", "")
-api_key_newsapi = st.text_input("newsapi API Key", "")
-api_key_naver_client_id = st.text_input("Naver Client ID", "")
-api_key_naver_client_secret = st.text_input("Naver Client Secret", "")
+# api_key_openai = st.text_input("OpenAI API Key", "")
+# api_key_newsapi = st.text_input("newsapi API Key", "")
+# api_key_naver_client_id = st.text_input("Naver Client ID", "")
+# api_key_naver_client_secret = st.text_input("Naver Client Secret", "")
+
+api_key_openai = st.secrets["api_key_openai"]
+api_key_newsapi = st.secrets["api_key_newsapi"]
+api_key_naver_client_id = st.secrets["api_key_naver_client_id"]
+api_key_naver_client_secret = st.secrets["api_key_naver_client_secret"]
+
 
 st.subheader("Search Parameters")
 cols_query = st.columns(2)
