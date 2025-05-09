@@ -230,6 +230,5 @@ Articles:
                     "type": "text"
                 }
             )
-            st.session_state.response = response.choices[0].message.content
-    st.success("요약이 완료되었습니다!")
-    st.markdown(st.session_state.response, unsafe_allow_html=True)
+        st.success("요약이 완료되었습니다!")
+        st.markdown(response.choices[0].message.content, unsafe_allow_html=True)
