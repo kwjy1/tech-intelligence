@@ -214,7 +214,7 @@ Format exactly like this:
 Articles:
 {articles_text}
 """
-            response = openai.CahtCompletion.create(
+            response = openai.ChatCompletion.create(
                 model = selected_model,
                 messages = [{"role": "system", "content": system_context},
                             {"role": "user", "content": prompt}],
