@@ -188,8 +188,6 @@ if "articles" in st.session_state:
                     f"   URL: {article['link']}\n\n"
                 )
 
-            client = OpenAI(api_key=api_key_openai)
-
             system_context = """
             You are an expert assistant for National Strategy Technology policy, you will carefully read them and produce a concise summary.
             """
@@ -216,7 +214,7 @@ Format exactly like this:
 Articles:
 {articles_text}
 """
-            response = client.CahtCompletion.create(
+            response = openai.CahtCompletion.create(
                 model = selected_model,
                 messages = [{"role": "system", "content": system_context},
                             {"role": "user", "content": prompt}],
