@@ -188,8 +188,7 @@ if "articles" in st.session_state:
                     f"   URL: {article['link']}\n\n"
                 )
 
-            # client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-            client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+            client = OpenAI(api_key=api_key_openai)
 
             system_context = """
             You are an expert assistant for National Strategy Technology policy, you will carefully read them and produce a concise summary.
