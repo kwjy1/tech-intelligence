@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import os
-from openai import OpenAI
+import openai
 from newsapi import NewsApiClient
 from datetime import datetime, timedelta, timezone
 
@@ -15,8 +15,7 @@ st.markdown("""
 - 링크(URL) 기준으로 중복기사를 제거하기 때문에 언론사별 동일한 기사가 존재할 수 있습니다
 """)
 
-api_key_openai = st.secrets["api_key_openai"]
-# api_key_openai = st.text_input("OpenAI API Key", "")
+openai.api_key = st.secrets["api_key_openai"]
 api_key_newsapi = st.secrets["api_key_newsapi"]
 api_key_naver_client_id = st.secrets["api_key_naver_client_id"]
 api_key_naver_client_secret = st.secrets["api_key_naver_client_secret"]
@@ -217,7 +216,7 @@ Format exactly like this:
 Articles:
 {articles_text}
 """
-            response = client.chat.completions.create(
+            response = client.CahtCompletion.create(
                 model = selected_model,
                 messages = [{"role": "system", "content": system_context},
                             {"role": "user", "content": prompt}],
