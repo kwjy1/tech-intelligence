@@ -1,71 +1,67 @@
-import streamlit as st
-import requests
+import io
+import re
 import os
+import requests
+import streamlit as st
 import openai
 from newsapi import NewsApiClient
 from datetime import datetime, timedelta, timezone
+from fpdf import FPDF
 
 st.set_page_config(layout="wide")
-st.title(":earth_asia: TECH INTELLIGENCE")
-
-st.markdown("""
-- 국가전략기술 관련 글로벌 뉴스 수집 및 분석 도구 (Proof of Concept Version)
-- Developed by KISTEP (Center for Strategic Technology Policy
-- 국내뉴스는 관련도 순 최대 100개의 뉴스가 검색됩니다
-- 링크(URL) 기준으로 중복기사를 제거하기 때문에 언론사별 동일한 기사가 존재할 수 있습니다
-""")
 
 openai.api_key = st.secrets["api_key_openai"]
 api_key_newsapi = st.secrets["api_key_newsapi"]
 api_key_naver_client_id = st.secrets["api_key_naver_client_id"]
 api_key_naver_client_secret = st.secrets["api_key_naver_client_secret"]
 
+st.title(":earth_asia: TECH INTELLIGENCE")
+st.markdown("""
+- 국가전략기술 관련 글로벌 뉴스 수집 및 분석 도구 (Proof of Concept Version)
+- Developed by **KISTEP 전략기술정책센터**
+- 국내뉴스는 관련도 순 최대 100개의 뉴스가 검색됩니다.
+- 정기적(매일) 수신을 원할 경우 stc@kistep.re.kr로 문의주시기 바랍니다.
+""")
+
 st.subheader("Search Parameters")
-cols_query = st.columns(2)
+cols_query = st.columns(4)
 query_kor = cols_query[0].text_input("검색키워드(국내)", "AI", help="네이버 뉴스 검색 키워드")
 query_glo = cols_query[1].text_input("검색키워드(국외)", "AI", help="글로벌 뉴스 검색 키워드")
 
-# Set Time Range
-time_span = st.text_input("검색기간(일)", 1)
+time_span = cols_query[2].text_input("검색기간(일)", 1) # Set Time Range
 today = datetime.now()
 start_date = today - timedelta(days=1)
 start_date = start_date.strftime("%Y-%m-%d")
 end_date = today.strftime("%Y-%m-%d")
 
-# OpenAI Model Selection: Adjust the list based on your available models
-model_options = ["gpt-4o", "gpt-4o-mini", "o3-mini"]
-selected_model = st.selectbox("AI 모델을 선택하세요", model_options, help="뉴스 요약 모델")
+model_options = ["gpt-4.1-mini", "gpt-4o", "gpt-4.1"] # OpenAI Model Selection
+selected_model = cols_query[3].selectbox("AI 모델을 선택하세요", model_options, help="뉴스 요약 모델")
+
 
 # Set Some option
-cols = st.columns(4)
-title_only = cols[0].checkbox("제목만 검색 (국외만 적용)")
-major_only = cols[1].checkbox("주요 언론사만")
-opt1       = cols[2].checkbox("옵션1")
-opt2       = cols[3].checkbox("옵션2")
+cols = st.columns(3)
+use_lang = cols[0].checkbox("언어(국외)")
+title_only = cols[1].checkbox("제목만(국외)")
+major_only = cols[2].checkbox("주요 언론사만(공사중)")
 
-use_lang = st.checkbox("언어 필터 사용여부(국외만 적용)")
 if use_lang:
     # ISO-639-1 코드 예시 목록
     lang_options = ["en","ar","de","en","es","fr","he","it","nl","no","pt","ru","sv","ud","zh"]
-    selected_lang = st.selectbox(
-        "언어 선택 (ISO-639-1)", 
-        options=lang_options, 
-        help="한 번에 하나의 언어만 선택 가능합니다."
-    )
+    selected_lang = st.selectbox("언어 선택 (ISO-639-1)", 
+                                 options=lang_options, 
+                                 help="한 번에 하나의 언어만 선택 가능합니다.")
 
 
 if st.button("🔍 Search"):
 
     # 네이버 뉴스 API 호출
     headers = {"X-Naver-Client-Id": api_key_naver_client_id,
-               "X-Naver-Client-Secret": api_key_naver_client_secret}
+               "X-Naver-Client-Secret":api_key_naver_client_secret}
     naver_url = "https://openapi.naver.com/v1/search/news.json"
-    naver_params = {
-    "query": query_kor,
-    "display": 100,
-    "start": 1,
-    "sort": "sim"
-    }
+    naver_params = {"query": query_kor,
+                    "display": 100,
+                    "start": 1,
+                    "sort": "sim"}
     resp = requests.get(naver_url, headers=headers, params=naver_params).json().get("items", [])
 
     ## 기사 링크 기준으로 중복기사 제거
@@ -97,11 +93,9 @@ if st.button("🔍 Search"):
     # 국외뉴스 API 호출
     newsapi = NewsApiClient(api_key=api_key_newsapi)
     
-    params = {
-        "from_param" : start_date,
-        "to" : end_date,
-        "page_size" : 100,
-    }
+    params = {"from_param" : start_date,
+              "to" : end_date,
+              "page_size" : 100}
 
     if title_only:
         params["qintitle"] = query_glo
@@ -161,8 +155,6 @@ if "articles" in st.session_state:
 
         st.markdown(md, unsafe_allow_html=True)
 
-
-
     # 요약하러 가기
     st.write("")  
     st.write("")  
@@ -170,7 +162,7 @@ if "articles" in st.session_state:
                                       help="원하는 요약 가이드라인이 있을 경우 입력",
                                       placeholder="사용자 요약 가이드라인")
     if st.button("📝 Summarize"):
-        with st.spinner("요약을 진행 중입니다… 잠시만 기다려주세요"):
+        with st.spinner("요약을 진행 중입니다… 잠시만 기다려주세요(요약 모델에 따라 30초~1분정도 소요됩니다.)"):
 
             articles_text = ""
             for i, article in enumerate(st.session_state.articles['articles'], 1):
@@ -214,12 +206,14 @@ Format exactly like this:
 Articles:
 {articles_text}
 """
+            max_token = 16384 if selected_model == "gpt-4o" else 32768
+            
             response = openai.ChatCompletion.create(
                 model = selected_model,
                 messages = [{"role": "system", "content": system_context},
                             {"role": "user", "content": prompt}],
                 temperature=0.2,
-                max_tokens=16384,
+                max_tokens=max_token,
                 top_p=1,
                 frequency_penalty=0,
                 presence_penalty=0,
@@ -229,3 +223,82 @@ Articles:
             )
         st.success("요약이 완료되었습니다!")
         st.markdown(response.choices[0].message.content, unsafe_allow_html=True)
+        st.session_state["summary_md"] = response.choices[0].message.content
+    
+
+summary_md = st.session_state.get("summary_md")
+if summary_md:
+    if st.button("📄 PDF로 다운로드"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # ✅ 유니코드 폰트 등록
+        pdf.add_font("Nanum", "",     "./fonts/NanumGothic.ttf",      uni=True)
+        pdf.add_font("Nanum", "B",    "./fonts/NanumGothicBold.ttf",  uni=True)
+        pdf.set_font("Nanum", "", size=12)   # 일반 텍스트
+        pdf.set_font("Nanum", "B", size=14)  # 굵은 헤더
+
+        for line in summary_md.splitlines():
+            line = line.rstrip()
+
+            # 1) 헤더 처리
+            if line.startswith("## "):
+                title = line[3:].strip()
+                pdf.set_font("Nanum", style='B', size=14)
+                pdf.write(8, title)
+                pdf.ln(10)
+                pdf.set_font("Nanum", size=12)
+                continue
+
+            # 2) Summary 문단 처리
+            if line.startswith("**Summary:**"):
+                content = line.split("**Summary:**", 1)[1].strip()
+                pdf.set_font("Nanum", style='B', size=12)
+                pdf.write(8, "Summary: ")
+                pdf.set_font("Nanum", size=12)
+                pdf.write(8, content)
+                pdf.ln(8)
+                continue
+
+            # 3) Articles 블록도 따로 처리
+            if "**Articles:**" in line:
+                pdf.set_font("Nanum", "B", 12)
+                pdf.write(8, "Articles:")
+                pdf.set_font("Nanum", size=12)
+                pdf.ln(6)
+                continue
+
+
+            # 3) 링크 리스트 항목
+            m = re.match(r"- \[(.*?)\]\((.*?)\)", line)
+            if m:
+                title, url = m.groups()
+                pdf.write(8, "• ")
+
+                # ✅ 파란색 밑줄로 하이퍼링크 표시
+                pdf.set_text_color(0, 0, 255)    # 파란색
+                pdf.set_font("Nanum", style='U') # 밑줄
+                pdf.write(8, title, link=url)
+
+                # 스타일 되돌리기
+                pdf.set_text_color(0, 0, 0)
+                pdf.set_font("Nanum", size=12)
+                pdf.ln(8)
+                continue
+
+            # 4) 일반 텍스트
+            if line:
+                pdf.write(8, line)
+                pdf.ln(8)
+
+        buffer = io.BytesIO()
+        pdf_data = pdf.output(dest='S').encode('latin1')
+        buffer = io.BytesIO(pdf_data)
+
+        st.download_button(
+            label="Download summary.pdf",
+            data=buffer,
+            file_name="summary.pdf",
+            mime="application/pdf"
+        )

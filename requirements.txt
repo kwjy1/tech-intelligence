@@ -1,2 +1,3 @@
 newsapi-python==0.2.7
 openai==0.27.8
+fpdf>=1.7.2
