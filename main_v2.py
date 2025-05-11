@@ -111,6 +111,9 @@ if st.button("🔍 Search"):
         # Do the Job
         st.session_state.articles = articles
         st.success(f"국내 뉴스 {len(recent_naver)}개, 글로벌 뉴스 {articles['totalResults']}개의 기사를 찾았습니다.")
+        number_of_articles = len(recent_naver) + articles['totalResults']
+        if number_of_articles < 30 or number_of_articles > 500:
+            st.warning("⚠️뉴스가 너무 적거나 많으면 요약이 부정확할 수 있습니다. 핵심 기사만 선택하거나 검색조건을 조절해 보세요.")
     else:
         st.error(f"News API error: {articles['status']}")
 
@@ -222,22 +225,21 @@ Articles:
                 }
             )
         st.success("요약이 완료되었습니다!")
-        st.markdown(response.choices[0].message.content, unsafe_allow_html=True)
         st.session_state["summary_md"] = response.choices[0].message.content
-    
 
 summary_md = st.session_state.get("summary_md")
+
 if summary_md:
+    st.markdown(summary_md, unsafe_allow_html=True)
     if st.button("📄 PDF로 다운로드"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
 
         # ✅ 유니코드 폰트 등록
+        pdf.add_font("NotoCJK", "", "./fonts/NotoSansCJKkr-Regular.ttf", uni=True)
         pdf.add_font("Nanum", "",     "./fonts/NanumGothic.ttf",      uni=True)
         pdf.add_font("Nanum", "B",    "./fonts/NanumGothicBold.ttf",  uni=True)
-        pdf.set_font("Nanum", "", size=12)   # 일반 텍스트
-        pdf.set_font("Nanum", "B", size=14)  # 굵은 헤더
 
         for line in summary_md.splitlines():
             line = line.rstrip()
@@ -278,12 +280,12 @@ if summary_md:
 
                 # ✅ 파란색 밑줄로 하이퍼링크 표시
                 pdf.set_text_color(0, 0, 255)    # 파란색
-                pdf.set_font("Nanum", style='U') # 밑줄
+                pdf.set_font("NotoCJK", style='U') # 밑줄
                 pdf.write(8, title, link=url)
 
                 # 스타일 되돌리기
                 pdf.set_text_color(0, 0, 0)
-                pdf.set_font("Nanum", size=12)
+                pdf.set_font("NotoCJK", size=12)
                 pdf.ln(8)
                 continue
 
